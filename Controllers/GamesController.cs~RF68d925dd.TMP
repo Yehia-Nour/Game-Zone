@@ -1,0 +1,56 @@
+﻿using GameZone.Data;
+using GameZone.Models;
+using GameZone.Services;
+using GameZone.ViewModels;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
+
+namespace GameZone.Controllers
+{
+    public class GamesController : Controller
+    {
+        private readonly ApplicationDbContext _context;
+        private readonly ICategoriesService _categoriesService;
+        private readonly IDevicesService _devicesService;
+        private readonly IGamesServices _gamesService;
+
+        public GamesController(ApplicationDbContext context,
+            ICategoriesService categoriesService,
+            IGamesServices gamesService)
+        {
+            _context = context;
+            _categoriesService = categoriesService;
+            _gamesService = gamesService;
+        }
+
+        public IActionResult Index()
+        {
+            return View();
+        }
+
+        [HttpGet]
+        public IActionResult Create()
+        {
+            CreateGameFromViewModel ViewModel = new CreateGameFromViewModel()
+            {
+                Categories = _categoriesService.GetSelectList(),
+                Devices = _devicesService.GetSelectList()
+            };
+            return View(ViewModel);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Create(CreateGameFromViewModel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                model.Categories = _categoriesService.GetSelectList();
+                model.Devices = _devicesService.GetSelectList();
+            }
+
+            await _gamesService.Create(model);
+            return RedirectToAction(nameof(Index));
+        }
+    }
+}
